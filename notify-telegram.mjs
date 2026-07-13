@@ -133,9 +133,11 @@ const rows = readFileSync(SCAN_HISTORY_PATH, 'utf-8')
   .slice(1)               // skip header
   .filter(Boolean)
   .map(line => {
-    const [url, first_seen, portal, title, company] = line.split('\t');
-    return { url, first_seen, portal, title: (title || '').trim(), company: (company || '').trim() };
+    const [url, first_seen, portal, title, company, status] = line.split('\t');
+    return { url, first_seen, portal, title: (title || '').trim(), company: (company || '').trim(), status };
   })
+  // status guard: upstream scan.mjs also logs cooldown:*/skipped_* rows — only 'added' rows are finds
+  .filter(r => (!r.status || r.status === 'added'))
   .filter(r => r.first_seen === targetDate);
 
 if (rows.length === 0) {
