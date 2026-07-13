@@ -140,7 +140,10 @@ const inTracker = (company, title) => seen.has((company + '|' + title).toLowerCa
 function rows() {
   if (!existsSync(SCAN)) { console.error('no scan-history.tsv'); process.exit(1); }
   return readFileSync(SCAN, 'utf-8').split('\n').slice(1).filter(Boolean)
-    .map(l => { const [url, date, portal, title, company] = l.split('\t'); return { url, date, portal, title, company }; })
+    .map(l => { const [url, date, portal, title, company, status] = l.split('\t'); return { url, date, portal, title, company, status }; })
+    // status guard: upstream scan.mjs also logs cooldown:*/skipped_* rows to this TSV
+    // when those features are configured — only 'added' (or legacy blank) rows are finds
+    .filter(r => (!r.status || r.status === 'added'))
     .filter(r => r.title && r.date !== 'first_seen' &&
       (onDate ? r.date === onDate : sinceDate ? r.date >= sinceDate : true));
 }

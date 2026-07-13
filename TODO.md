@@ -11,7 +11,7 @@
 - [x] Auto-apply rewired: triage ≥4.5 → apply-orchestrator (gate+eval both clean) ✅ live for tomorrow's 07:00 cron
 - [x] Data layer repaired: tracker restored on CT 203, reports renumbered 015-024, sync-ct203.sh ✅
 - [x] Finder expanded: Workday (Tempus/CrowdStrike/DaVita), OpenAI/Twilio/SentinelOne/HiddenLayer/Gong/Dialpad/LivePerson boards, BIC scraper fixed ✅
-- [ ] **PATRICK:** install the BIC cron step: `ssh root@10.1.30.50 "cp /opt/career-ops/career-scan.new /usr/local/bin/career-scan && chmod +x /usr/local/bin/career-scan"`
+- [ ] **PATRICK:** install the BIC cron step: `ssh root@10.1.30.50 "cp /opt/career-ops/career-scan.new /usr/local/bin/career-scan && chmod +x /usr/local/bin/career-scan"` — verified safe 2026-07-13: chromium present on CT 203, manual scan-builtin.mjs run succeeded, the added step is fail-safe (`|| true`)
 - [ ] Fresh base CV PDF for unattended applies (current fallback = Stripe-tailored from 05-25); name it to sort last in output/, e.g. `cv-patrick-moore-zz-base-<date>.pdf`
 
 ### Follow-ups overdue (31 business days, no responses)
@@ -98,7 +98,7 @@
 - [x] Root cause: overlap/minLen gave false positives for shared generic words ✅
 - [x] Test cases pass: Abridge AppSec vs InfraSec correctly treated as different ✅
 - [x] test-all.mjs passes (72/72) ✅
-- [ ] Add regression test to test-all.mjs (roleFuzzyMatch unit tests)
+- [x] Add regression test to test-all.mjs (roleFuzzyMatch unit tests) ✅ section 11 "Merge-tracker dedup regression" exists and passes
 
 ### scan.mjs Spanish headers
 - [x] `## Pendientes` → `## Pending` in pipeline.md ✅ 2026-05-25
@@ -114,7 +114,7 @@
 - [x] 7 search categories: Security, Cloud Security, AI, DevSecOps/SRE, Platform, InfraSec, Cybersec ✅
 - [x] Reuses portals.yml title filters and scan-history.tsv dedup ✅
 - [x] Added to daily-pipeline.sh (step 2/5) ✅
-- [ ] Test on CT 203 (needs Playwright chromium on the container)
+- [x] Test on CT 203 ✅ 2026-07-13 — chromium-1223 present, manual run found 20+ new roles; only the cron install step (line above in IMMEDIATE) remains
 
 ---
 

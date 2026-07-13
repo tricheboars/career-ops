@@ -183,7 +183,9 @@ This fork has user-specific customizations that change defaults from the upstrea
 
 2. **Comp floor is $160K base USD.** If the JD lists a comp range and `max < $160K`, output a 1-sentence SKIP verdict — do NOT generate a full A-G evaluation. Token-wasteful otherwise. See `modes/_profile.md` "Your Comp Targets" section.
 
-3. **Reports are in English.** The system-layer `modes/*.md` files were translated to English on 2026-05-17 (originally Spanish from upstream author). If `node update-system.mjs apply` is run, modes/ will revert to Spanish — re-apply translations from `project_careerops_english_modes.md` in memory, or override at write-time using the translation table in `modes/_profile.md` "Report Output Language" section.
+3. **Reports are in English.** Since the v1.19.0 upstream sync (2026-07-13) the system-layer `modes/*.md` files are natively English — no translation pass needed. The Spanish→English fallback table remains in `modes/_profile.md` "Report Output Language" in case a future update regresses.
+
+4. **Upstream updates go through git, not the updater.** This fork syncs via `git merge upstream/main` on a branch (see PR for the 1.7.0→1.19.0 sync) — do NOT run `node update-system.mjs apply`, which replaces system-layer files wholesale and would clobber the fork's merged customizations. After any sync, re-verify the voice wiring (below) and the fork ports listed in `memory/project_upstream_sync_backlog.md`.
 
 ### Voice engine — anti-AI-tell rules (added 2026-06-06)
 
@@ -193,7 +195,7 @@ Companies reject AI-written cover letters and smart readers recognize Claude/Cha
 - **Bundle dedup is the loudest single-generator signal.** A CV + cover letter + essays generated in one run must not recycle a phrase, a narrative arc, *or the skeleton* (concede→reframe→wry-kicker) across docs. Make each doc handle its gap, contrast, and closing differently.
 - **Ceiling rule (learned the hard way over 3 passes: HIGH→MEDIUM→MEDIUM, 5.75→6.0).** An AI scrubbing its own draft tops out at "competent-generic," not "unmistakably Patrick" — each pass trades a loud tell for a subtler one. After **≤2 structural passes, STOP and hand to Patrick** for ONE real voice beat (genuine enthusiasm / a car-engine-whiteboard analogy, in his words). Do NOT manufacture it — performed folksiness ("those reps would be new for me") becomes the next tell. **Never claim "LOW / undetectable" from automation alone.**
 - **Upstream fix (open TODO):** populate `writing-samples/` with real Patrick writing (an old cover letter, a Slack post, a lab note) so the engine imitates his actual voice instead of an inferred profile — the only thing that raises the ceiling.
-- System-layer wiring (`modes/_shared.md`, `cover-letter.md`, `apply.md`, `auto-pipeline.md`, `pdf.md`, and this CLAUDE.md subsection) reverts on `update-system.mjs apply` — re-apply per `memory/project_voice_engine_upgrade.md`. The `modes/_profile.md` rules persist (user layer).
+- System-layer wiring lives in `modes/_shared.md` ("Vary sentence SHAPE" + structural-rules pointer), `modes/auto-pipeline.md` (form-answers voice block), `modes/pdf.md` (step 9 real exit-narrative + self-audit) — these are fork edits on top of upstream files, so future `git merge upstream/main` runs will surface them as conflicts to re-resolve (never lose them silently). The **75–120-word cover letter cap** and all structural rules live in `modes/_profile.md` (user layer, persists). Upstream's cover mode is `modes/cover.md` (the old fork `cover-letter.md` was removed in the 1.19.0 sync); cover.md defers to `_profile.md`, which overrides its 350-420-word default.
 
 ### Patrick-specific workflow
 
@@ -204,8 +206,8 @@ Companies reject AI-written cover letters and smart readers recognize Claude/Cha
 
 ### Known bugs to work around
 
-- **`merge-tracker.mjs` dedup was too aggressive (FIXED 2026-05-25).** Switched `roleFuzzyMatch()` from min-ratio to Jaccard similarity (0.75 threshold). Same-company different-roles are now correctly treated as separate entries. Regression tests added to `test-all.mjs`. Still worth verifying `data/applications.md` diff after merges — see `feedback_merge_tracker_dedup_bug.md` in memory.
-- **`scan.mjs` Spanish headers (FIXED 2026-05-25).** Now writes `## Pending` / `## Processed` with backward-compat fallback for legacy `## Pendientes` / `## Procesadas`.
+- **`merge-tracker.mjs` dedup was too aggressive (FIXED — superseded 2026-07-13).** The fork's Jaccard fix was replaced in the v1.19.0 sync by upstream's shared `role-matcher.mjs` (true Jaccard 0.6 + seniority guard + baseline-token discrimination — strictly stronger; the AppSec-vs-InfraSec case is covered by upstream tests). Still worth verifying `data/applications.md` diff after merges — see `feedback_merge_tracker_dedup_bug.md` in memory.
+- **`scan.mjs` Spanish headers (FIXED 2026-05-25, now upstream-native).** Upstream writes `## Pending` with backward-compat fallback for legacy `## Pendientes`.
 
 ### Where the scanner lives + how to refresh it
 
@@ -219,7 +221,7 @@ Companies reject AI-written cover letters and smart readers recognize Claude/Cha
 - **The scorer is fail-closed now.** `lib/location-gate.mjs` (18 self-tests: `node lib/location-gate.mjs`) hard-skips %-in-office and "Remote-Friendly (Travel-Required)" JDs pre-LLM; `openrouter-eval.mjs` `enforcePolicy()` caps any eval whose own LOCATION_POLICY extraction violates the hard rules to 1.0/SKIP in code, and UNCLEAR locations to ≤3.9. The model advises, the code decides — don't undo this by trusting raw scores.
 - **Auto-apply is wired into triage** (`triage.mjs` → `apply-orchestrator.mjs --submit`) for score ≥4.5 when the gate verdict AND the eval's LOCATION_POLICY are both clean and the platform is in `auto_apply_platforms`. `--no-auto-apply` disables per-run. On CT 203 there is no `claude -p`, so CV falls back to newest `output/cv-*.pdf` and no cover letter is generated (intentional — voice-engine ceiling rule).
 - Eval model: `anthropic/claude-sonnet-5` via OpenRouter (~$0.09/eval, 1–5 survivors/day typical). Override with `OPENROUTER_MODEL`.
-- Finder: Workday boards use `api_type: workday` + cxs `api:` in portals.yml (Tempus/CrowdStrike/DaVita wired); `scan-builtin.mjs` scrapes Built In Colorado (Denver) — its cron step lives in `/usr/local/bin/career-scan` (staged as `/opt/career-ops/career-scan.new` if not yet installed).
+- Finder: Workday boards use upstream's `providers/workday.mjs` — portals.yml entries need only `careers_url` (board form, auto-detected) + optional `provider: workday` (Tempus/CrowdStrike/DaVita migrated 2026-07-13; never put the resolved `/wday/cxs/` endpoint in `api:` — it mis-parses and 404s). Scan-time non-US pre-drop is a fork port inside scan.mjs (`clearlyNonUS`, reuses `lib/location-gate.mjs`). `scan-builtin.mjs` scrapes Built In Colorado (Denver) — its cron step lives in `/usr/local/bin/career-scan` (staged as `/opt/career-ops/career-scan.new` if not yet installed).
 - Gotcha: scan.mjs stamps rows with the **UTC** date — an evening MDT run writes tomorrow's date, so `triage --date` must match (`date -u +%F`).
 
 ### Default workflow for picking up
