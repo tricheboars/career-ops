@@ -332,6 +332,27 @@ const USER_PATHS = [
   'plugins.lock',
   '.claude/settings.json',
   '.claude/hooks/',
+  // ── Fork additions (Patrick) — user-owned pipeline, never replaced by updates ──
+  'TODO.md',
+  'apply-auto.mjs',
+  'apply-orchestrator.mjs',
+  'auto-pipeline.mjs',
+  'browser-login.mjs',
+  'career-ops-listener.service',
+  'cover-letters/',
+  'daily-pipeline.sh',
+  'followup-check.mjs',
+  'generate-interview-prep.mjs',
+  // note: individual lib files, not the whole dir — upstream ships system files there (lib/latex-*.mjs)
+  'lib/ats-fetch.mjs',
+  'lib/location-gate.mjs',
+  'lib/telegram.mjs',
+  'notify-telegram.mjs',
+  'openrouter-eval.mjs',
+  'scan-builtin.mjs',
+  'sync-ct203.sh',
+  'telegram-listener.mjs',
+  'triage.mjs',
 ];
 
 function parseVersionFile(raw) {
